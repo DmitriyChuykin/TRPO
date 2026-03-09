@@ -1,18 +1,18 @@
 name: Django CI/CD Pipeline
 
-# Запускаем workflow при пушах и пулл-реквестах в ветку main (или master)
+# Запускаем при обновлениях в ветке main
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
 
 jobs:
   # ==========================================
   # 1. ЭТАП CI: ТЕСТИРОВАНИЕ ПРОЕКТА
   # ==========================================
   test:
-    name: Build and Test
+    name: Build and Test (CI)
     runs-on: ubuntu-latest
 
     steps:
@@ -23,63 +23,43 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: 'pip' # Кэшируем пакеты для ускорения сборки
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Check Django setup
-        run: |
-          python manage.py check
-
-      - name: Run migrations (for test DB)
-        run: |
-          python manage.py migrate
+      - name: Run migrations
+        run: python manage.py migrate
 
       - name: Run tests
-        run: |
-          python manage.py test
+        run: python manage.py test
 
   # ==========================================
-  # 2. ЭТАП CD: ДЕПЛОЙ НА СЕРВЕР
+  # 2. ЭТАП CD: СБОРКА АРХИВА (АРТЕФАКТА)
   # ==========================================
-  deploy:
-    name: Deploy to Production
-    needs: test # ВАЖНО: Деплой начнется ТОЛЬКО если этап test прошел без ошибок!
+  build-archive:
+    name: Build Release Archive (CD)
+    needs: test # Начинаем сборку ТОЛЬКО если тесты прошли успешно!
     runs-on: ubuntu-latest
 
-    # Деплоим только если это пуш в ветку main (не деплоим pull requests)
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    # Собираем архив только при пуше в main (не для pull request-ов)
+    if: github.ref == 'refs/heads/main'
 
     steps:
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}     # IP адрес сервера (например: 87.242.12.33)
-          username: ${{ secrets.SERVER_USER }} # Имя пользователя (например: root или ubuntu)
-          key: ${{ secrets.SERVER_SSH_KEY }}   # Приватный SSH-ключ сервера
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          # Команды, которые выполнятся НА ТВОЕМ СЕРВЕРЕ:
-          script: |
-            # 1. Переходим в папку с проектом (ЗАМЕНИ НА СВОЙ ПУТЬ НА СЕРВЕРЕ!)
-            cd /var/www/library_project
-            
-            # 2. Забираем последние изменения с GitHub
-            git pull origin main
-            
-            # 3. Активируем виртуальное окружение
-            source venv/bin/activate
-            
-            # 4. Устанавливаем новые зависимости, если они появились
-            pip install -r requirements.txt
-            
-            # 5. Применяем новые миграции к боевой базе данных
-            python manage.py migrate
-            
-            # 6. Собираем статику (CSS/JS) без запроса подтверждения
-            python manage.py collectstatic --noinput
-            
-            # 7. Перезапускаем веб-сервер (Gunicorn / uWSGI). ЗАМЕНИ ИМЯ СЕРВИСА НА СВОЁ!
-            sudo systemctl restart gunicorn
+      # Создаем ZIP-архив проекта, исключая системные и мусорные файлы
+      - name: Create ZIP archive
+        run: |
+          zip -r library_project_release.zip . -x "*.git*" "*.github*" "*.idea*" "*__pycache__*" "*.sqlite3" "venv/*"
+
+      # Загружаем архив в GitHub Actions как готовый "Артефакт"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ready-project-archive # Имя файла, который можно будет скачать
+          path: library_project_release.zip
+          retention-days: 7 # Сколько дней архив будет храниться на GitHub
