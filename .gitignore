@@ -1,0 +1,21 @@
+# Виртуальное окружение
+venv/
+env/
+.venv/
+
+# База данных SQLite (нельзя пушить боевую/тестовую БД в гит!)
+db.sqlite3
+db.sqlite3-journal
+
+# Кэш Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Настройки IDE (PyCharm, VSCode)
+.idea/
+.vscode/
+
+# Статика и медиа (если появятся)
+/media/
+/staticfiles/

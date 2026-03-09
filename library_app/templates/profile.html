@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Личный кабинет</title>
+</head>
+<body>
+    <h1>Личный кабинет</h1>
+    
+    <p>Добро пожаловать, <strong>{{ user.username }}!</strong></p>
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div style="color: green; margin: 10px 0; padding: 10px; background: #e8f5e8;">
+                ✅ {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+    
+    <div style="border: 1px solid #ccc; padding: 20px; margin: 20px 0;">
+        <h3>Баланс</h3>
+        <p style="font-size: 24px; font-weight: bold;">{{ profile.balance }} руб.</p>
+        <a href="{% url 'top_up_balance' %}" style="padding: 10px 15px; background: #007bff; color: white; text-decoration: none;">
+            Пополнить баланс
+        </a>
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <a href="/">На главную</a>
+    </div>
+</body>
+</html>

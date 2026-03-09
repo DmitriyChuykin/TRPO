@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Пополнение баланса</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            padding: 40px; 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .balance-info {
+            background: #E3F2FD;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .balance-amount {
+            font-size: 24px;
+            color: #2196F3;
+            font-weight: bold;
+        }
+        .form-group {
+            margin: 20px 0;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .error {
+            color: red;
+            background: #FFEBEE;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .nav-links {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .nav-links a {
+            color: #2196F3;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>💰 Пополнение баланса</h1>
+        
+        <div class="balance-info">
+            <p>Ваш текущий баланс:</p>
+            <div class="balance-amount">{{ request.user.readerprofile.balance }} руб.</div>
+        </div>
+
+        {% if error %}
+        <div class="error">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="amount">Сумма пополнения (руб.):</label>
+                <input type="number" id="amount" name="amount" min="1" step="0.01" required placeholder="Введите сумму">
+            </div>
+            
+            <button type="submit">💳 Пополнить баланс</button>
+        </form>
+
+        <div class="nav-links">
+            <a href="/cabinet/">← Назад в кабинет</a>
+            <a href="/">На главную</a>
+        </div>
+    </div>
+</body>
+</html>
