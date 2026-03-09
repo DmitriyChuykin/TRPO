@@ -44,3 +44,39 @@ jobs:
     - name: Run tests
       run: |
         python manage.py test
+    
+    name: Django CI/CD
+
+    on:
+      push:
+        branches: [ "main", "master" ]
+      pull_request:
+        branches: [ "main", "master" ]
+
+    jobs:
+      test:
+        # ... (здесь тот код тестов, что я кидал в прошлом ответе) ...
+        # (Не буду дублировать, чтобы не засорять экран)
+
+      deploy:
+        name: Deploy to Production
+        needs: test # ВАЖНО: Деплой начнется ТОЛЬКО если тесты прошли успешно!
+        runs-on: ubuntu-latest
+        if: github.ref == 'refs/heads/main' # Деплоим только при пуше в основную ветку
+
+        steps:
+        - name: Deploy via SSH
+          uses: appleboy/ssh-action@v1.0.3
+          with:
+            host: ${{ secrets.SERVER_HOST }}     # IP твоего сервера
+            username: ${{ secrets.SERVER_USER }} # Имя пользователя (например, root)
+            key: ${{ secrets.SERVER_SSH_KEY }}   # Приватный SSH-ключ для доступа
+            script: |
+              cd /path/to/your/project/library_project
+              git pull origin main
+              source venv/bin/activate
+              pip install -r requirements.txt
+              python manage.py migrate
+              python manage.py collectstatic --noinput
+              sudo systemctl restart gunicorn # Перезапускаем сервер (Gunicorn или другой)
+
